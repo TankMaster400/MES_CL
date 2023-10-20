@@ -53,14 +53,14 @@ double gauss(int num, int dim)
 
     switch (dim)
     {
-    case 2:
+    case 1:
 
         for (int i = 0; i < num; i++)
         {
             wart += W[i] * ff1(X[i]);
         }
         return wart;
-    case 3:
+    case 2:
         for (int i = 0; i < num; i++)
         {
             for (int j = 0; j < num; j++)
@@ -72,6 +72,27 @@ double gauss(int num, int dim)
     }
 
 }
+
+double dN1(double n)
+{
+    return -0.25 * (1 - n);
+}
+
+double dN2(double n)
+{
+    return 0.25 * (1 - n);
+}
+
+double dN3(double n)
+{
+    return 0.25 * (1 + n);
+}
+
+double dN4(double n)
+{
+    return -0.25 * (1 + n);
+}
+
 
 struct Global_data
 {
@@ -98,7 +119,61 @@ struct element
     int ID[1][4];
     element();
 };
+struct element_uni
+{
+    double * Tab[4];
 
+    element_uni(int n)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            Tab[i] = new double[n];
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            switch (i)
+            {
+            case 0:
+
+                for (int j = 0; j < n; j++)
+                {
+
+                    Tab[i][j] = dN1(i);
+                }
+                break;
+            case 1:
+
+                for (int j = 0; j < n; j++)
+                {
+
+                    Tab[i][j] = dN2(i);
+                }
+                break;
+            case 2:
+
+                for (int j = 0; j < n; j++)
+                {
+
+                    Tab[i][j] = dN3(i);
+                }
+                break;
+            case 3:
+
+                for (int j = 0; j < n; j++)
+                {
+
+                    Tab[i][j] = dN4(i);
+                }
+                break;
+        
+            }
+
+          
+        }
+    }
+    
+};
 struct grid
 {
     int Nn;
@@ -187,10 +262,22 @@ int main()
         cout << endl;
     }
 
+    cout << gauss(2, 1) << endl;
     cout << gauss(2, 2) << endl;
-    cout << gauss(2, 3) << endl;
+    cout << gauss(3, 1) << endl;
     cout << gauss(3, 2) << endl;
-    cout << gauss(3, 3) << endl;
+
+    element_uni el(4);
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << el.Tab[i][j];
+        }
+        cout << endl;
+    }
+
 
     free(grid1.Tnode);
     free(grid1.Tele);

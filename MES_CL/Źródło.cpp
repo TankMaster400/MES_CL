@@ -4,7 +4,7 @@
 #include <string>
 #include <iomanip>      
 using namespace std;
-//test
+//test ad
 double ff2(double x, double y)
 {
     return 5 * pow(x, 2) * pow(y, 2) + 3 * x * y + 6;

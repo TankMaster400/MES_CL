@@ -73,24 +73,44 @@ double gauss(int num, int dim)
 
 }
 
-double dN1(double n)
+double dN1e(double n)
 {
     return -0.25 * (1 - n);
 }
 
-double dN2(double n)
+double dN2e(double n)
 {
     return 0.25 * (1 - n);
 }
 
-double dN3(double n)
+double dN3e(double n)
 {
     return 0.25 * (1 + n);
 }
 
-double dN4(double n)
+double dN4e(double n)
 {
     return -0.25 * (1 + n);
+}
+
+double dN1n(double e)
+{
+    return -0.25 * (1 - e);
+}
+
+double dN2n(double e)
+{
+    return -0.25 * (1 + e);
+}
+
+double dN3n(double e)
+{
+    return 0.25 * (1 + e);
+}
+
+double dN4n(double e)
+{
+    return 0.25 * (1 - e);
 }
 
 
@@ -119,59 +139,104 @@ struct element
     int ID[1][4];
     element();
 };
+
+struct J
+{
+    double** Tab;
+    J(int  n)
+    {
+        Tab = new double* [n];
+   
+
+        for (int i = 0; i < n; i++)
+        {
+            Tab[i] = new double[2];
+        }
+        int i = sqrt(n);
+     
+        switch (i)
+        {
+        case 2:
+            Tab[0][0] = -sqrt(3.0) / 3.0;
+            Tab[0][1] = -sqrt(3.0) / 3.0;
+            Tab[1][0] = sqrt(3.0) / 3.0;
+            Tab[1][1] = -sqrt(3.0) / 3.0;
+            Tab[2][0] = -sqrt(3.0) / 3.0;
+            Tab[2][1] = sqrt(3.0) / 3.0;
+            Tab[3][0] = sqrt(3.0) / 3.0;
+            Tab[3][1] = sqrt(3.0) / 3.0;
+          
+            break;
+        case 3:
+            
+            Tab[0][0] = -sqrt(15.0) / 5.0;
+            Tab[0][1] = -sqrt(15.0) / 5.0;
+            Tab[1][0] = 0;
+            Tab[1][1] = -sqrt(15.0) / 5.0;
+            Tab[2][0] = sqrt(15.0) / 5.0;
+            Tab[2][1] = -sqrt(15.0) / 5.0;
+            Tab[3][0] = -sqrt(15.0) / 5.0;
+            Tab[3][1] = 0;
+            Tab[4][0] = 0;
+            Tab[4][1] = 0;
+            Tab[5][0] = sqrt(15.0) / 5.0;
+            Tab[5][1] = 0;
+            Tab[6][0] = -sqrt(15.0) / 5.0;
+            Tab[6][1] = sqrt(15.0) / 5.0;
+            Tab[7][0] = 0;
+            Tab[7][1] = sqrt(15.0) / 5.0;
+            Tab[8][0] = sqrt(15.0) / 5.0;
+            Tab[8][1] = sqrt(15.0) / 5.0;
+     
+            break;
+        }
+
+    }
+};
+
 struct element_uni
 {
-    double * Tab[4];
+    double ** Tab;
+    double ** Tab2;
 
-    element_uni(int n)
+    element_uni(int n, struct J test)
     {
-        for (int i = 0; i < 4; i++)
+        Tab = new double*[n];
+        Tab2 = new double*[n];
+
+        for (int i = 0; i < n; i++)
         {
-            Tab[i] = new double[n];
+            Tab[i] = new double[4];
         }
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < n; i++)
         {
-            switch (i)
-            {
-            case 0:
-
-                for (int j = 0; j < n; j++)
-                {
-
-                    Tab[i][j] = dN1(i);
-                }
-                break;
-            case 1:
-
-                for (int j = 0; j < n; j++)
-                {
-
-                    Tab[i][j] = dN2(i);
-                }
-                break;
-            case 2:
-
-                for (int j = 0; j < n; j++)
-                {
-
-                    Tab[i][j] = dN3(i);
-                }
-                break;
-            case 3:
-
-                for (int j = 0; j < n; j++)
-                {
-
-                    Tab[i][j] = dN4(i);
-                }
-                break;
-        
-            }
-
-          
+       
+                    Tab[i][0] = dN1n(test.Tab[i][1]);
+            
+                    Tab[i][1] = dN2n(test.Tab[i][1]);
+    
+                    Tab[i][2] = dN3n(test.Tab[i][1]);
+    
+                    Tab[i][3] = dN4n(test.Tab[i][1]);
         }
-    }
+
+        for (int i = 0; i < n; i++)
+        {
+            Tab2[i] = new double[4];
+        }
+
+        for (int i = 0; i < n; i++)
+        {
+            Tab2[i][0] = dN1e(test.Tab[i][0]);
+
+            Tab2[i][1] = dN2e(test.Tab[i][0]);
+
+            Tab2[i][2] = dN3e(test.Tab[i][0]);
+
+            Tab2[i][3] = dN4e(test.Tab[i][0]);
+        }
+  }
     
 };
 struct grid
@@ -183,6 +248,7 @@ struct grid
      element * Tele ;
      grid(int N, int E) : Nn(N), En(E) {  };
 };
+
 
 
 int main()
@@ -267,17 +333,30 @@ int main()
     cout << gauss(3, 1) << endl;
     cout << gauss(3, 2) << endl;
 
-    element_uni el(4);
+    J Jac(9);
 
-    for (int i = 0; i < 4; i++)
+    element_uni el(9, Jac);
+    for (int i = 0; i < 9; i++)
     {
         for (int j = 0; j < 4; j++)
         {
             cout << "   " << el.Tab[i][j];
         }
         cout << endl;
+
+    }
+    cout << endl;
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << el.Tab2[i][j];
+        }
+        cout << endl;
+
     }
 
+   
 
     free(grid1.Tnode);
     free(grid1.Tele);

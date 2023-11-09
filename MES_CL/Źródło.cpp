@@ -4,7 +4,7 @@
 #include <string>
 #include <iomanip>      
 using namespace std;
-//test afafda
+
 double ff2(double x, double y)
 {
     return 5 * pow(x, 2) * pow(y, 2) + 3 * x * y + 6;
@@ -13,7 +13,6 @@ double ff1(double x)
 {
     return 5 * pow(x, 2) + 3 * x + 6;
 }
-
 
 double gauss(int num, int dim)
 {
@@ -127,7 +126,6 @@ struct Global_data
     Global_data() {};
     Global_data(int ST, int SST, int C, int A, int T, int IT, int D, int SH): SimulationTime(ST),SimulationStepTime(SST),Conductivity(C), Alfa(A),Tot(T),InitialTemp(IT),Density(D),SpecificHeat(SH){}
 };
-
 struct node
 {
     double x,y;
@@ -159,10 +157,10 @@ struct J
         case 2:
             Tab[0][0] = -sqrt(3.0) / 3.0;
             Tab[0][1] = -sqrt(3.0) / 3.0;
-            Tab[1][0] = sqrt(3.0) / 3.0;
-            Tab[1][1] = -sqrt(3.0) / 3.0;
-            Tab[2][0] = -sqrt(3.0) / 3.0;
-            Tab[2][1] = sqrt(3.0) / 3.0;
+            Tab[1][0] = -sqrt(3.0) / 3.0;
+            Tab[1][1] = sqrt(3.0) / 3.0;
+            Tab[2][0] = sqrt(3.0) / 3.0;
+            Tab[2][1] = -sqrt(3.0) / 3.0;
             Tab[3][0] = sqrt(3.0) / 3.0;
             Tab[3][1] = sqrt(3.0) / 3.0;
           
@@ -198,11 +196,13 @@ struct element_uni
 {
     double ** Tab;
     double ** Tab2;
+    int N;
 
-    element_uni(int n, struct J test)
+    element_uni(int n, struct J wart_p)
     {
         Tab = new double*[n];
         Tab2 = new double*[n];
+        N = n;
 
         for (int i = 0; i < n; i++)
         {
@@ -211,14 +211,14 @@ struct element_uni
 
         for (int i = 0; i < n; i++)
         {
-       
-                    Tab[i][0] = dN1n(test.Tab[i][1]);
-            
-                    Tab[i][1] = dN2n(test.Tab[i][1]);
-    
-                    Tab[i][2] = dN3n(test.Tab[i][1]);
-    
-                    Tab[i][3] = dN4n(test.Tab[i][1]);
+                    
+                    Tab[i][0] = dN1e(wart_p.Tab[i][0]);
+
+                    Tab[i][1] = dN2e(wart_p.Tab[i][0]);
+
+                    Tab[i][2] = dN3e(wart_p.Tab[i][0]);
+
+                    Tab[i][3] = dN4e(wart_p.Tab[i][0]);
         }
 
         for (int i = 0; i < n; i++)
@@ -228,17 +228,80 @@ struct element_uni
 
         for (int i = 0; i < n; i++)
         {
-            Tab2[i][0] = dN1e(test.Tab[i][0]);
+            Tab2[i][0] = dN1n(wart_p.Tab[i][1]);
 
-            Tab2[i][1] = dN2e(test.Tab[i][0]);
+            Tab2[i][1] = dN2n(wart_p.Tab[i][1]);
 
-            Tab2[i][2] = dN3e(test.Tab[i][0]);
+            Tab2[i][2] = dN3n(wart_p.Tab[i][1]);
 
-            Tab2[i][3] = dN4e(test.Tab[i][0]);
+            Tab2[i][3] = dN4n(wart_p.Tab[i][1]);
         }
   }
     
 };
+
+struct matrixH
+{
+    double** dNdx;
+    double** dNdy;
+    double detJ [4];
+    double tk[4][2][2];
+    double H[4][4][4];
+    matrixH(double ID_xy[2][4], struct element_uni el)
+    {
+       for(int i = 0; i < 4 ; i++)
+       { 
+        tk[i][0][0] = el.Tab[i][0] * ID_xy[0][0] + el.Tab[i][1] * ID_xy[0][1] + el.Tab[i][2] * ID_xy[0][2] + el.Tab[i][3] * ID_xy[0][3];
+        tk[i][0][1] = el.Tab[i][0] * ID_xy[1][0] + el.Tab[i][1] * ID_xy[1][1] + el.Tab[i][2] * ID_xy[1][2] + el.Tab[i][3] * ID_xy[1][3];
+        tk[i][1][0] = el.Tab2[i][0] * ID_xy[0][0] + el.Tab2[i][1] * ID_xy[0][1] + el.Tab2[i][2] * ID_xy[0][2] + el.Tab2[i][3] * ID_xy[0][3];
+        tk[i][1][1] = el.Tab2[i][0] * ID_xy[1][0] + el.Tab2[i][1] * ID_xy[1][1] + el.Tab2[i][2] * ID_xy[1][2] + el.Tab2[i][3] * ID_xy[1][3];
+
+        detJ[i] = 1 / (tk[i][1][1] * tk[i][0][0] - tk[i][0][1] * tk[i][1][1]);
+       }
+        dNdx = new double* [el.N];
+        dNdy = new double* [el.N];
+ 
+
+        for (int i = 0; i < el.N; i++)
+        {
+            dNdx[i] = new double[4];
+        }
+
+        for (int i = 0; i < el.N; i++)
+        {
+            dNdy[i] = new double[4];
+        }
+
+        for (int i = 0; i < el.N; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                dNdx[i][j] = tk[i][0][0] * detJ[i] * el.Tab[i][j] + tk[i][1][0] * detJ[i] * el.Tab2[i][j];
+            }
+        }
+
+        for (int i = 0; i < el.N; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                dNdy[i][j] = tk[i][0][1] * detJ[i] * el.Tab[i][j] + tk[i][1][1] * detJ[i] * el.Tab2[i][j];
+            }
+        }
+       
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+                    H[i][j][g] = 30 * (dNdx[i][j] * dNdx[i][g] + dNdy[i][j] * dNdy[i][g]) * 1 / detJ[i];
+                }
+            
+            }
+        }
+    }
+};
+
 struct grid
 {
     int Nn;
@@ -333,10 +396,12 @@ int main()
     cout << gauss(3, 1) << endl;
     cout << gauss(3, 2) << endl;
 
-    J Jac(9);
+    int N= 4;
 
-    element_uni el(9, Jac);
-    for (int i = 0; i < 9; i++)
+    J Jac(N);
+
+    element_uni el(N, Jac);
+    for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < 4; j++)
         {
@@ -346,7 +411,7 @@ int main()
 
     }
     cout << endl;
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < 4; j++)
         {
@@ -355,9 +420,42 @@ int main()
         cout << endl;
 
     }
+    cout << endl;
+    double ID_xy[2][4] = { {0,0.025,0.025, 0},{0,0,0.025,0.025} };
+    matrixH  H(ID_xy, el);
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << H.dNdx[i][j];
+        }
+        cout << endl;
 
-   
+    }
+    cout << endl;
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << H.dNdy[i][j];
+        }
+        cout << endl;
 
+    }
+
+    cout << endl;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            for (int g = 0; g < 4; g++)
+            {
+                cout << "   " << H.H[i][j][g];
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
     free(grid1.Tnode);
     free(grid1.Tele);
     return 0;

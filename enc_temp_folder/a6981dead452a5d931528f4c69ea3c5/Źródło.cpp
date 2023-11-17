@@ -62,6 +62,64 @@ struct Global_data
     Global_data(int ST, int SST, int C, int A, int T, int IT, int D, int SH) : SimulationTime(ST), SimulationStepTime(SST), Conductivity(C), Alfa(A), Tot(T), InitialTemp(IT), Density(D), SpecificHeat(SH) {}
 };
 
+double gauss(int num, int dim)
+{
+    double* X = new double[num];
+    double* W = new double[num];
+
+    switch (num)
+    {
+    case 2:
+        X[0] = -sqrt(3.0) / 3.0;
+        X[1] = sqrt(3.0) / 3.0;
+        W[0] = 1.0;
+        W[1] = 1.0;
+        break;
+    case 3:
+        X[0] = -sqrt(15.0) / 5.0;
+        X[1] = 0.0;
+        X[2] = sqrt(15.0) / 5.0;
+        W[0] = 5.0 / 9.0;
+        W[1] = 8.0 / 9.0;
+        W[2] = 5.0 / 9.0;
+        break;
+    case 4:
+        X[0] = -sqrt(525 + 70 * sqrt(30)) / 35.0;
+        X[1] = -sqrt(525 - 70 * sqrt(30)) / 35.0;
+        X[2] = sqrt(525 - 70 * sqrt(30)) / 35.0;
+        X[3] = sqrt(525 + 70 * sqrt(30)) / 35.0;
+        W[0] = (18.0 - sqrt(30.0)) / 36.0;
+        W[1] = (18.0 + sqrt(30.0)) / 36.0;
+        W[2] = (18.0 + sqrt(30.0)) / 36.0;
+        W[3] = (18.0 - sqrt(30.0)) / 36.0;
+        break;
+    }
+
+
+    double wart = 0;
+
+    switch (dim)
+    {
+    case 1:
+
+        for (int i = 0; i < num; i++)
+        {
+            wart += W[i] * ff1(X[i]);
+        }
+        return wart;
+    case 2:
+        for (int i = 0; i < num; i++)
+        {
+            for (int j = 0; j < num; j++)
+            {
+                wart += W[i]* W[j] * ff2(X[i], X[j]);
+            }
+        }
+        return wart;
+    }
+
+}
+
 struct node
 {
     double x,y;

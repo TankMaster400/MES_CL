@@ -18,9 +18,15 @@
     <ClCompile Include="Źródło.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="Źródło1.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Test1_4_4.txt">
+      <Filter>Pliki źródłowe</Filter>
+    </Text>
+    <Text Include="Test2_4_4_MixGrid.txt">
       <Filter>Pliki źródłowe</Filter>
     </Text>
   </ItemGroup>

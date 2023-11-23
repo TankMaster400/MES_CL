@@ -210,8 +210,8 @@ struct grid
 
 int main()
 {
-    //ifstream readfile("Test1_4_4.txt");
-    ifstream readfile("Test2_4_4_MixGrid.txt");
+    ifstream readfile("Test1_4_4.txt");
+    //ifstream readfile("Test2_4_4_MixGrid.txt");
     double valgd[8];
 
     for (int i = 0; i < 8; i++)

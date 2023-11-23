@@ -73,7 +73,10 @@ struct element
     int ID[1][4];
     double H[4][4];
     double Hbc[4][4];
+
+ 
     element();
+   
 };
 
 struct GaussIntegration
@@ -207,8 +210,8 @@ struct grid
 
 int main()
 {
-    ifstream readfile("Test1_4_4.txt");
-    //ifstream readfile("Test2_4_4_MixGrid.txt");
+    //ifstream readfile("Test1_4_4.txt");
+    ifstream readfile("Test2_4_4_MixGrid.txt");
     double valgd[8];
 
     for (int i = 0; i < 8; i++)
@@ -354,7 +357,7 @@ int main()
             tk[j][1][1] = el.dNdEta[j][0] * ID_xy[1][0] + el.dNdEta[j][1] * ID_xy[1][1] + el.dNdEta[j][2] * ID_xy[1][2] + el.dNdEta[j][3] * ID_xy[1][3];
             cout << tk[j][0][0] << "   " << tk[j][0][1] << endl;
             cout << tk[j][1][0] << "   " << tk[j][1][1] << endl;
-            detJ[j] = (tk[j][1][1] * tk[j][0][0] - tk[j][0][1] * tk[j][1][1]);
+            detJ[j] = (tk[j][1][1] * tk[j][0][0] - tk[j][0][1] * tk[j][1][0]);
             cout << detJ[j] << endl;
             cout << endl;
 
@@ -370,38 +373,59 @@ int main()
      
         for (int j = 0; j < 4; j++)
         {
+            cout << " dNdx " << j << endl;
             for (int g = 0; g < 4; g++)
             {
-                cout << dNdx[j][g] << endl;
+                cout << dNdx[j][g] <<"  ";
             }
-        }
+      
+            cout << endl;
+            cout << " dNdy " << j << endl;
+            for (int g = 0; g < 4; g++)
+            {
+                cout << dNdy[j][g] << "  ";
+            }
+            cout << endl;
+          }
         cout << endl;
         for (int j = 0; j < 4; j++)
         {
             for (int g = 0; g < 4; g++)
             {
-                cout << dNdy[j][g] << endl;
-            }
-        }
-        cout << endl;
 
-     
+                grid1.Tele[i].H[j][g] = 0;
+            }
+          
+        }
+        for (int c = 0; c < 4; c++)
+        {
             for (int j = 0; j < 4; j++)
             {
                 for (int g = 0; g < 4; g++)
                 {
-                    grid1.Tele[i].H[j][g] = GD.Conductivity * (dNdx[j][0] * dNdx[0][g] + dNdy[j][0] * dNdy[0][g]) *  detJ[j];
+
+                    grid1.Tele[i].H[j][g] += GD.Conductivity * (dNdx[c][j] * dNdx[c][g] + dNdy[c][j] * dNdy[c][g]) * detJ[j];
+                   
+                }
+              
+            }
+        }
+            cout << endl;
+            //Dziwne wyniki
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+
                     cout << grid1.Tele[i].H[j][g] << "   ";
+
                 }
                 cout << endl;
             }
-            cout << endl;
-            //Dziwne wyniki
-
-
+            
 
     }
- 
+    
 
     cout << endl;
     return 0;

@@ -92,6 +92,7 @@ struct element
     double H[4][4];
     double Hbc[4][4][4]; 
     double P[4];
+    double C[4][4];
     element();   
 };
 
@@ -112,7 +113,7 @@ struct GaussIntegration
 
         int i = sqrt(n);
         Tab_w = new double[i];
-        switch (i) 
+        switch (i) // 0 - eta || 1 - ksi (ksi, eta) hehe
         {
         case 2:
             Tab_pc[0][0] = -sqrt(3.0) / 3.0;
@@ -121,9 +122,9 @@ struct GaussIntegration
             Tab_pc[1][1] = sqrt(3.0) / 3.0;
 
             Tab_pc[2][0] = sqrt(3.0) / 3.0;
-            Tab_pc[2][1] = -sqrt(3.0) / 3.0;
+            Tab_pc[2][1] = sqrt(3.0) / 3.0;
             Tab_pc[3][0] = sqrt(3.0) / 3.0;
-            Tab_pc[3][1] = sqrt(3.0) / 3.0;
+            Tab_pc[3][1] = -sqrt(3.0) / 3.0;
 
             Tab_w[0] = 1;
             Tab_w[1] = 1;
@@ -233,6 +234,7 @@ struct element_uni //tutaj
 {
     double ** dNdKsi;
     double ** dNdEta;
+    double** Tab_N;
     int N;
     double S[4];
     double *** Surp;
@@ -241,7 +243,7 @@ struct element_uni //tutaj
     {
         dNdKsi = new double*[n];
         dNdEta = new double*[n];
-
+        Tab_N = new double* [n];
         int npc = sqrt(n);
 
         Surp = new double**[4];
@@ -256,6 +258,10 @@ struct element_uni //tutaj
             {
                 Surp[i][j] = new double[2];
             }
+        }
+        for (int i = 0; i < n; i++)
+        {
+            Tab_N[i] = new double [4];
         }
 
         N = n;
@@ -292,11 +298,18 @@ struct element_uni //tutaj
 
             dNdEta[i][3] = dN4n(wart_p.Tab_pc[i][1]);
         }
-        //hbpc
+
+        for (int i = 0; i < n; i++)
+        {
+            Tab_N[i][0] = N1(wart_p.Tab_pc[i][1], wart_p.Tab_pc[i][0]);
+            Tab_N[i][1] = N2(wart_p.Tab_pc[i][1], wart_p.Tab_pc[i][0]);
+            Tab_N[i][2] = N3(wart_p.Tab_pc[i][1], wart_p.Tab_pc[i][0]);
+            Tab_N[i][3] = N4(wart_p.Tab_pc[i][1], wart_p.Tab_pc[i][0]);
+        }
+
         HB_PC_wart(npc, Surp);
        
   }
-    // tu  cos?
 
 };
 
@@ -319,8 +332,8 @@ struct grid
 
 int main()
 {
-    ifstream readfile("Test1_4_4.txt");
-    //ifstream readfile("Test2_4_4_MixGrid.txt");
+    //ifstream readfile("Test1_4_4.txt");
+    ifstream readfile("Test2_4_4_MixGrid.txt");
     double valgd[8];
 
     for (int i = 0; i < 8; i++)
@@ -411,26 +424,36 @@ int main()
 
     //Wypisanie dNdKsi oraz dNdEta
 
-    //for (int i = 0; i < N; i++)
-    //{
-    //    for (int j = 0; j < 4; j++)
-    //    {
-    //        cout << "   " << el.dNdKsi[i][j];
-    //    }
-    //    cout << endl;
+  /*  for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << el.dNdKsi[i][j];
+        }
+        cout << endl;
 
-    //}
-    //cout << endl;
-    //for (int i = 0; i < N; i++)
-    //{
-    //    for (int j = 0; j < 4; j++)
-    //    {
-    //        cout << "   " << el.dNdEta[i][j];
-    //    }
-    //    cout << endl;
+    }
+    cout << endl;
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << el.dNdEta[i][j];
+        }
+        cout << endl;
 
-    //}
-    //cout << endl;
+    }
+    cout << endl;
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cout << "   " << el.Tab_N[i][j];
+        }
+        cout << endl;
+
+    }
+    cout << endl;*/
 
     double ID_xy[2][4];  // = { {0,0.025,0.025, 0},{0,0,0.025,0.025} };
     double tk[4][2][2];
@@ -452,7 +475,9 @@ int main()
     }
 
     double** agr_tab;
+    double* agr_P;
     agr_tab = new double* [grid1.Nn];
+    agr_P = new double[grid1.Nn];
     for (int j = 0; j < grid1.Nn; j++)
     {
 
@@ -465,6 +490,7 @@ int main()
         {
 
             agr_tab[j][g] = 0;
+            agr_P[g] = 0;
 
         }
         cout << endl;
@@ -492,40 +518,54 @@ int main()
             tk[j][0][1] = el.dNdKsi[j][0] * ID_xy[1][0] + el.dNdKsi[j][1] * ID_xy[1][1] + el.dNdKsi[j][2] * ID_xy[1][2] + el.dNdKsi[j][3] * ID_xy[1][3];
             tk[j][1][0] = el.dNdEta[j][0] * ID_xy[0][0] + el.dNdEta[j][1] * ID_xy[0][1] + el.dNdEta[j][2] * ID_xy[0][2] + el.dNdEta[j][3] * ID_xy[0][3];
             tk[j][1][1] = el.dNdEta[j][0] * ID_xy[1][0] + el.dNdEta[j][1] * ID_xy[1][1] + el.dNdEta[j][2] * ID_xy[1][2] + el.dNdEta[j][3] * ID_xy[1][3];
-           /* cout << tk[j][0][0] << "   " << tk[j][0][1] << endl;
-            cout << tk[j][1][0] << "   " << tk[j][1][1] << endl;*/
+            cout << tk[j][0][0] << "   " << tk[j][0][1] << endl;
+            cout << tk[j][1][0] << "   " << tk[j][1][1] << endl;
             detJ[j] = (tk[j][1][1] * tk[j][0][0] - tk[j][0][1] * tk[j][1][0]);
-           /* cout << detJ[j] << endl;
-            cout << endl*/;
+            cout << detJ[j] << endl;
+            cout << endl;
 
             for (int g = 0; g < 4; g++)
             {
-                dNdx[j][g] = tk[j][0][0] * (1 / detJ[j]) * el.dNdKsi[j][g] + tk[j][1][0] * (1 / detJ[j]) * el.dNdEta[j][g];
+                dNdx[j][g] = tk[j][1][1] * (1. / detJ[j]) * el.dNdKsi[j][g] + -tk[j][0][1] * (1. / detJ[j]) * el.dNdEta[j][g];
             }
             for (int g = 0; g < 4; g++)
             {
-                dNdy[j][g] = tk[j][0][1] * (1 / detJ[j]) * el.dNdKsi[j][g] + tk[j][1][1] * (1 / detJ[j]) * el.dNdEta[j][g];
+                dNdy[j][g] = -tk[j][1][0] * (1. / detJ[j]) * el.dNdKsi[j][g] + tk[j][0][0] * (1. / detJ[j]) * el.dNdEta[j][g];
             }
         }
+        double temp;
+        temp = detJ[3];
+        detJ[3] = detJ[2];
+        detJ[2] = temp;
+        for (int g = 0; g < 4; g++)
+        {
+            temp = dNdx[3][g];
+            dNdx[3][g] = dNdx[2][g];
+            dNdx[2][g] = temp;
 
+            temp = dNdy[3][g];
+            dNdy[3][g] = dNdy[2][g];
+            dNdy[2][g] = temp;
+
+        }
         //Wypisanie dN/dx oraz dN/dy 
-        //for (int j = 0; j < 4; j++)
-        //{
-        //    cout << " dNdx " << j << endl;
-        //    for (int g = 0; g < 4; g++)
-        //    {
-        //        cout << dNdx[j][g] << "  ";
-        //    }
+        for (int j = 0; j < 4; j++)
+        {
+            cout << " dNdx " << j << endl;
+            for (int g = 0; g < 4; g++)
+            {
+                cout << dNdx[j][g] << "  ";
+            }
 
-        //    cout << endl;
-        //    cout << " dNdy " << j << endl;
-        //    for (int g = 0; g < 4; g++)
-        //    {
-        //        cout << dNdy[j][g] << "  ";
-        //    }
-        //    cout << endl;
-        //}
-        //cout << endl;
+            cout << endl;
+            cout << " dNdy " << j << endl;
+            for (int g = 0; g < 4; g++)
+            {
+                cout << dNdy[j][g] << "  ";
+            }
+            cout << endl;
+        }
+        cout << endl;
 
         for (int j = 0; j < 4; j++)
         {
@@ -546,7 +586,7 @@ int main()
                 for (int g = 0; g < 4; g++)
                 {
 
-                    grid1.Tele[i].H[j][g] += (GD.Conductivity * (dNdx[c][j] * dNdx[c][g] + dNdy[c][j] * dNdy[c][g]) * detJ[j]) * GausI.Tab_w[w1] * GausI.Tab_w[w2];
+                    grid1.Tele[i].H[j][g] += (GD.Conductivity * (dNdx[c][j] * dNdx[c][g] + dNdy[c][j] * dNdy[c][g]) * detJ[c]) * GausI.Tab_w[w1] * GausI.Tab_w[w2];
 
                 }
 
@@ -556,7 +596,7 @@ int main()
 
         }
 
-         cout << "H:" << endl;
+        cout << "H:" << endl;
         for (int j = 0; j < 4; j++)
         {
             for (int g = 0; g < 4; g++)
@@ -567,18 +607,18 @@ int main()
         }
 
         double*** tabN;
-        tabN = new double**[4];
+        tabN = new double** [4];
 
         for (int i = 0; i < 4; i++)
         {
-           tabN[i] = new double*[sqrt(N)];
+            tabN[i] = new double* [sqrt(N)];
         }
 
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < sqrt(N); j++)
             {
-                tabN[i][j] = new double [4];
+                tabN[i][j] = new double[4];
             }
         }
 
@@ -591,7 +631,7 @@ int main()
                 tabN[j][g][1] = N2(el.Surp[j][g][0], el.Surp[j][g][1]);
                 tabN[j][g][2] = N3(el.Surp[j][g][0], el.Surp[j][g][1]);
                 tabN[j][g][3] = N4(el.Surp[j][g][0], el.Surp[j][g][1]);
-                
+
 
             }
             cout << endl;
@@ -610,31 +650,31 @@ int main()
         }
         double L;
 
-       
-       
-            for (int a = 0; a < 4; a++)
+
+
+        for (int a = 0; a < 4; a++)
+        {
+
+            for (int nn = 0; nn < sqrt(N); nn++)
             {
-              
-                for (int nn = 0; nn < sqrt(N); nn++)
+                for (int g = 0; g < 4; g++)
                 {
-                    for (int g = 0; g < 4; g++)
+
+                    L = pow((grid1.Tnode[grid1.Tele[i].ID[g % 4] - 1].x - grid1.Tnode[grid1.Tele[i].ID[((g % 4) + 1) % 4] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[g % 4] - 1].y - grid1.Tnode[grid1.Tele[i].ID[((g % 4) + 1) % 4] - 1].y), 2);
+                    L = sqrt(L) / 2;
+
+                    for (int c = 0; c < 4; c++)
                     {
 
-                        L = pow((grid1.Tnode[grid1.Tele[i].ID[0] - 1].x - grid1.Tnode[grid1.Tele[i].ID[1] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[0] - 1].y - grid1.Tnode[grid1.Tele[i].ID[1] - 1].y), 2);
-                        L = sqrt(L)/2;
-                        //L = 0.0125;
-                        for (int c = 0; c < 4; c++)
-                        {
-
-                            grid1.Tele[i].Hbc[a][g][c] += 300 * GausI.Tab_w[nn] *(tabN[a][nn][g] * tabN[a][nn][c]) * L;
-                        
-                        }
+                        grid1.Tele[i].Hbc[a][g][c] += 300 * GausI.Tab_w[nn] * (tabN[a][nn][g] * tabN[a][nn][c]) * L;
 
                     }
 
                 }
+
             }
-       
+        }
+
         cout << "Hbc:" << endl;
 
         for (int a = 0; a < 4; a++)
@@ -651,96 +691,97 @@ int main()
             }
             cout << endl;
         }
-        
 
 
 
-   //     cout << endl;
-    //    cout << "P:" << endl;
-        double P[4][4];
 
-        for (int c = 0; c < sqrt(N); c++)
+        //     cout << endl;
+         //    cout << "P:" << endl;
+        double P[4] = { 0.0,0.0,0.0,0.0 };
+
+        for (int k = 0; k < 4; k++)
         {
-            for (int a = 0; a < 4; a++)
+            for (int c = 0; c < sqrt(N); c++)
             {
+
 
                 for (int g = 0; g < 4; g++)
                 {
 
-                    L = pow((grid1.Tnode[grid1.Tele[i].ID[0] - 1].x - grid1.Tnode[grid1.Tele[i].ID[1] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[0] - 1].y - grid1.Tnode[grid1.Tele[i].ID[1] - 1].y), 2);
+                    L = pow((grid1.Tnode[grid1.Tele[i].ID[k % 4] - 1].x - grid1.Tnode[grid1.Tele[i].ID[((k % 4) + 1) % 4] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[k % 4] - 1].y - grid1.Tnode[grid1.Tele[i].ID[((k % 4) + 1) % 4] - 1].y), 2);
                     L = sqrt(L) / 2;
-                    P[a][g] = 300 * (GausI.Tab_w[c] * tabN[a][c][g] * GD.Tot) * L;
 
-
+                    if (grid1.Tnode[grid1.Tele[i].ID[k % 4] - 1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[((k % 4) + 1) % 4] - 1].BC == 1)
+                    {
+                        P[g] += 300 * (GausI.Tab_w[c] * tabN[k][c][g] * GD.Tot) * L;
+                    }
                 }
+
 
 
             }
         }
-        //Dziwne wyniki GD.Conductivity
-        //for (int a = 0; a < 4; a++)
-        //{
+        cout << " P: " << endl;
+        for (int a = 0; a < 4; a++)
+        {
 
-        //    for (int g = 0; g < 4; g++)
-        //    {
 
-        //        cout << P[a][g] << "   ";
+            cout << P[a] << "   ";
 
-        //    }
-        //    cout << endl;
 
-        //}
 
+        }
+        cout << endl;
 
 
         cout << endl;
         cout << "H + Hbc" << endl;
-      
-           
-                    
-                        if(grid1.Tnode[grid1.Tele[i].ID[0] -1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[1] -1].BC == 1)
-                        { 
-                            for (int j = 0; j < 4; j++)
-                            {
-                                for (int g = 0; g < 4; g++)
-                                {
-                                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[0][j][g];
-                                }
-                            }
-                        }
-                        if (grid1.Tnode[grid1.Tele[i].ID[1] -1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[2] -1].BC == 1)
-                        {
-                            for (int j = 0; j < 4; j++)
-                            {
-                                for (int g = 0; g < 4; g++)
-                                {
-                                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[1][j][g];
-                                }
-                            }
-                        }
-                        if (grid1.Tnode[grid1.Tele[i].ID[2]-1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[3] -1].BC == 1)
-                        {
-                            for (int j = 0; j < 4; j++)
-                            {
-                                for (int g = 0; g < 4; g++)
-                                {
-                                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[2][j][g];
-                                }
-                            }
-                        }
-                        if (grid1.Tnode[grid1.Tele[i].ID[3] -1 ].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[0] -1].BC == 1)
-                        {
-                            for (int j = 0; j < 4; j++)
-                            {
-                                for (int g = 0; g < 4; g++)
-                                {
-                                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[3][j][g];
-                                }
-                            }
-                        }   
 
-            
-       
+
+
+        if (grid1.Tnode[grid1.Tele[i].ID[0] - 1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[1] - 1].BC == 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[0][j][g];
+                }
+            }
+        }
+        if (grid1.Tnode[grid1.Tele[i].ID[1] - 1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[2] - 1].BC == 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[1][j][g];
+                }
+            }
+        }
+        if (grid1.Tnode[grid1.Tele[i].ID[2] - 1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[3] - 1].BC == 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[2][j][g];
+                }
+            }
+        }
+        if (grid1.Tnode[grid1.Tele[i].ID[3] - 1].BC == 1 && grid1.Tnode[grid1.Tele[i].ID[0] - 1].BC == 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int g = 0; g < 4; g++)
+                {
+                    grid1.Tele[i].H[j][g] += grid1.Tele[i].Hbc[3][j][g];
+                }
+            }
+        }
+
+
+
 
         for (int j = 0; j < 4; j++)
         {
@@ -752,6 +793,60 @@ int main()
             }
             cout << endl;
         }
+        //
+        for (int j = 0; j < 4; j++)
+        {
+            for (int g = 0; g < 4; g++)
+            {
+
+                grid1.Tele[i].C[j][g] = 0;
+            }
+
+        }
+        temp = detJ[2];
+        detJ[2] = detJ[3];
+        detJ[3] = temp;
+        w1 = 0;
+        w2 = 0;
+        cout << "C - " << endl;
+     
+            for (int c = 0; c < N; c++)
+            {
+                if (c == 2) { w1 = 0; }
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int g = 0; g < 4; g++)
+                    {
+
+                        grid1.Tele[i].C[j][g] += GD.Density * GD.SpecificHeat * (el.Tab_N[c][j] * el.Tab_N[c][g]) * detJ[c] * GausI.Tab_w[w1] * GausI.Tab_w[w2];
+                    
+                    }
+                }
+                w1++;
+                if (c == 1) { w2++; }
+
+            }
+        
+
+        for (int j = 0; j < 4; j++)
+        {
+            for (int g = 0; g < 4; g++)
+            {
+
+                cout << grid1.Tele[i].C[j][g] << "  ";
+            }
+            cout << endl;
+        }
+        cout << "C - " << endl;
+
+        for (int j = 0; j < 4; j++)
+        {
+            for (int g = 0; g < 4; g++)
+            {
+                grid1.Tele[i].H[j][g] += grid1.Tele[i].C[j][g]/GD.SimulationStepTime;
+            }
+        }
+
         for (int j = 0; j < 4; j++)
         {
             for (int g = 0; g < 4; g++)
@@ -762,19 +857,54 @@ int main()
             }
             
         }
+
+        for (int j = 0; j < 4; j++)
+        {
+            for (int g = 0; g < 4; g++)
+            {
+                P[j] += GD.InitialTemp *grid1.Tele[i].C[j][g]/GD.SimulationStepTime;
+            }
+        }
+
+  
+            for (int g = 0; g < 4; g++)
+            {
+
+                agr_P[grid1.Tele[i].ID[g] - 1] += P[g];
+
+            }
+
+            for (int g = 0; g < grid1.Nn; g++)
+            {
+
+                cout << agr_P[g] << "      ";
+
+            }
        
+         
     
     }
+    cout << endl;
+    cout << std::setprecision(4);
     for (int j = 0; j < grid1.Nn; j++)
     {
         for (int g = 0; g < grid1.Nn; g++)
         {
 
-            cout << agr_tab[j][g] << "   ";
+            cout << agr_tab[j][g] << "      ";
 
         }
         cout << endl;
     }
+    for (int g = 0; g < grid1.Nn; g++)
+    {
 
+        cout << agr_P[g] << "      ";
+
+    }
+    cout << endl;
     return NULL;
 }
+
+// wzór z pliku
+

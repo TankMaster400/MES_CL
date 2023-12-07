@@ -475,25 +475,29 @@ int main()
     }
 
     double** agr_tab;
+    double** agr_tab_C;
     double* agr_P;
+    double* agr_C;
     agr_tab = new double* [grid1.Nn];
+    agr_tab_C = new double* [grid1.Nn];
     agr_P = new double[grid1.Nn];
+    agr_C = new double[grid1.Nn];
     for (int j = 0; j < grid1.Nn; j++)
     {
 
         agr_tab[j] = new double[grid1.Nn];
+        agr_tab_C[j] = new double[grid1.Nn];
 
     }
     for (int j = 0; j < grid1.Nn; j++)
     {
         for (int g = 0; g < grid1.Nn; g++)
         {
-
             agr_tab[j][g] = 0;
-            agr_P[g] = 0;
-
+            agr_tab_C[j][g] = 0;
         }
-        cout << endl;
+        agr_P[j] = 0;
+        agr_C[j] = 0;
     }
 
 
@@ -549,7 +553,7 @@ int main()
 
         }
         //Wypisanie dN/dx oraz dN/dy 
-        for (int j = 0; j < 4; j++)
+      /*  for (int j = 0; j < 4; j++)
         {
             cout << " dNdx " << j << endl;
             for (int g = 0; g < 4; g++)
@@ -565,7 +569,7 @@ int main()
             }
             cout << endl;
         }
-        cout << endl;
+        cout << endl;*/
 
         for (int j = 0; j < 4; j++)
         {
@@ -660,7 +664,7 @@ int main()
                 for (int g = 0; g < 4; g++)
                 {
 
-                    L = pow((grid1.Tnode[grid1.Tele[i].ID[g % 4] - 1].x - grid1.Tnode[grid1.Tele[i].ID[((g % 4) + 1) % 4] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[g % 4] - 1].y - grid1.Tnode[grid1.Tele[i].ID[((g % 4) + 1) % 4] - 1].y), 2);
+                    L = pow((grid1.Tnode[grid1.Tele[i].ID[a % 4] - 1].x - grid1.Tnode[grid1.Tele[i].ID[(a+1) % 4] - 1].x), 2) + pow((grid1.Tnode[grid1.Tele[i].ID[a % 4] - 1].y - grid1.Tnode[grid1.Tele[i].ID[((a % 4) + 1) % 4] - 1].y), 2);
                     L = sqrt(L) / 2;
 
                     for (int c = 0; c < 4; c++)
@@ -721,20 +725,20 @@ int main()
 
             }
         }
-        cout << " P: " << endl;
-        for (int a = 0; a < 4; a++)
-        {
+        //cout << " P: " << endl;
+        //for (int a = 0; a < 4; a++)
+        //{
 
 
-            cout << P[a] << "   ";
+        //    cout << P[a] << "   ";
 
 
 
-        }
-        cout << endl;
+        //}
+        //cout << endl;
 
 
-        cout << endl;
+        //cout << endl;
         cout << "H + Hbc" << endl;
 
 
@@ -843,10 +847,10 @@ int main()
         {
             for (int g = 0; g < 4; g++)
             {
-                grid1.Tele[i].H[j][g] += grid1.Tele[i].C[j][g]/GD.SimulationStepTime;
+                agr_tab_C[grid1.Tele[i].ID[j] - 1][grid1.Tele[i].ID[g] - 1] += grid1.Tele[i].C[j][g];
             }
         }
-
+      
         for (int j = 0; j < 4; j++)
         {
             for (int g = 0; g < 4; g++)
@@ -858,53 +862,179 @@ int main()
             
         }
 
+        for (int g = 0; g < 4; g++)
+        {
+
+            agr_P[grid1.Tele[i].ID[g] - 1] += P[g];
+
+        }
+
         for (int j = 0; j < 4; j++)
         {
             for (int g = 0; g < 4; g++)
             {
-                P[j] += GD.InitialTemp *grid1.Tele[i].C[j][g]/GD.SimulationStepTime;
+                agr_C[grid1.Tele[i].ID[g] - 1] += grid1.Tele[i].C[j][g];
             }
         }
 
-  
-            for (int g = 0; g < 4; g++)
-            {
-
-                agr_P[grid1.Tele[i].ID[g] - 1] += P[g];
-
-            }
-
-            for (int g = 0; g < grid1.Nn; g++)
+ 
+          /*  for (int g = 0; g < grid1.Nn; g++)
             {
 
                 cout << agr_P[g] << "      ";
 
-            }
+            }*/
        
          
     
     }
     cout << endl;
-    cout << std::setprecision(4);
+    cout << std::setprecision(6);
     for (int j = 0; j < grid1.Nn; j++)
     {
         for (int g = 0; g < grid1.Nn; g++)
         {
 
-            cout << agr_tab[j][g] << "      ";
-
+            cout << agr_tab[j][g] + agr_tab_C[j][g]/GD.SimulationStepTime << "      ";
         }
         cout << endl;
+    }
+
+    double* agr_PC = new double[grid1.Nn];
+
+    for (int g = 0; g < grid1.Nn; g++)
+    {
+
+        agr_PC[g] = agr_P[g] + GD.InitialTemp * agr_C[g]/GD.SimulationStepTime;
+
     }
     for (int g = 0; g < grid1.Nn; g++)
     {
 
-        cout << agr_P[g] << "      ";
+        cout << agr_PC[g] << "      ";
 
     }
     cout << endl;
+    double* tab_wynik = new double[grid1.Nn];
+    double* Y = new double[grid1.Nn];
+    double** L = new double* [grid1.Nn];
+    double** U = new double* [grid1.Nn];
+    for (int i = 0; i < grid1.Nn; i++)
+    {
+        L[i] = new double[grid1.Nn];
+    }
+    for (int i = 0; i < grid1.Nn; i++)
+    {
+        U[i] = new double[grid1.Nn];
+    }
+ 
+    double temp;
+    for (double p = GD.SimulationStepTime; p < GD.SimulationTime + 1; p += GD.SimulationStepTime)
+    {
+       
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            for (int j = 0; j < grid1.Nn; j++)
+            {
+                L[i][j] = 0;
+            }
+        }
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            for (int j = 0; j < grid1.Nn; j++)
+            {
+                U[i][j] = 0;
+            }
+        }
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            L[i][i] = 1;
+        }
+
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            for (int j = 0; j < grid1.Nn; j++)
+            {
+                double sum = 0;
+                for (int k = 0; k <= i - 1; k++)
+                {
+                    sum += L[i][k] * U[k][j];
+
+                }
+
+                if (i <= j)
+                {
+
+                    U[i][j] = (agr_tab[i][j] +( agr_tab_C[i][j] / GD.SimulationStepTime)) - sum;
+                }
+                else
+                {
+                    L[i][j] = (1. / U[j][j]) * ((agr_tab[i][j] +( agr_tab_C[i][j] / GD.SimulationStepTime)) - sum);
+                }
+            }
+
+        }
+
+
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            double sum = 0;
+            for (int j = 0; j <= i - 1; j++)
+            {
+                sum += L[i][j] * Y[j];
+
+            }
+            Y[i] = agr_PC[i] - sum;
+
+        }
+
+        tab_wynik[grid1.Nn - 1] = Y[grid1.Nn - 1] / U[grid1.Nn - 1][grid1.Nn - 1];
+        int i = grid1.Nn - 2;
+        while (i >= 0)
+        {
+            double sum = 0;
+            for (int j = i + 1; j < grid1.Nn; j++)
+            {
+                sum += U[i][j] * tab_wynik[j];
+
+            }
+            tab_wynik[i] = 1 / U[i][i] * (Y[i] - sum);
+            i--;
+        }
+        cout << "wartosc T dla: "<< p << endl;
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            cout << tab_wynik[i] << "  ";
+            if (i % 4 == 3)
+            {
+            
+            cout << endl;
+            }
+        }
+
+double temp;
+//for (int g = 0; g < grid1.Nn; g += 4)
+//{
+//    temp = tab_wynik[g + 3];
+//    tab_wynik[g + 3] = tab_wynik[g];
+//    tab_wynik[g] = temp;
+//    temp = tab_wynik[g + 2];
+//    tab_wynik[g + 2] = tab_wynik[g + 1];
+//    tab_wynik[g + 1] = temp;
+//
+//} 
+
+        cout <<endl;
+            for (int g = 0; g < grid1.Nn; g ++)
+            {
+                agr_PC[g] = agr_P[g] + tab_wynik[g ] * agr_C[g] / (GD.SimulationStepTime);
+                cout << agr_PC[g] << "      ";
+
+            }
+            cout << endl;
+    }
+
     return NULL;
 }
-
 // wzór z pliku
 

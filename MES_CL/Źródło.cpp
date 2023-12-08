@@ -902,18 +902,7 @@ int main()
 
     double* agr_PC = new double[grid1.Nn];
 
-    for (int g = 0; g < grid1.Nn; g++)
-    {
 
-        agr_PC[g] = agr_P[g] + GD.InitialTemp * agr_C[g]/GD.SimulationStepTime;
-
-    }
-    for (int g = 0; g < grid1.Nn; g++)
-    {
-
-        cout << agr_PC[g] << "      ";
-
-    }
     cout << endl;
     double* tab_wynik = new double[grid1.Nn];
     double* Y = new double[grid1.Nn];
@@ -928,7 +917,30 @@ int main()
         U[i] = new double[grid1.Nn];
     }
  
-    double temp;
+    //double temp;
+
+    
+    double Asr = (double)GD.Conductivity / (double)(GD.SpecificHeat * GD.Density);
+
+    double dl = pow((grid1.Tnode[grid1.Tele[2].ID[0] - 1].x - grid1.Tnode[grid1.Tele[2].ID[1]-1].x), 2) + pow((grid1.Tnode[grid1.Tele[2].ID[0]-1].y - grid1.Tnode[grid1.Tele[2].ID[1]-1].y), 2);
+    cout << Asr << endl;
+    cout << dl << endl;
+    double dtime = dl/ (0.5 * Asr);
+    cout << "dtime" << dtime << endl;
+    
+
+    for (int g = 0; g < grid1.Nn; g++)
+    {
+
+        agr_PC[g] = agr_P[g] + GD.InitialTemp * agr_C[g] /dtime;
+
+    }
+    for (int g = 0; g < grid1.Nn; g++)
+    {
+
+        cout << agr_PC[g] << "      ";
+
+    }
     for (double p = GD.SimulationStepTime; p < GD.SimulationTime + 1; p += GD.SimulationStepTime)
     {
        
@@ -965,11 +977,11 @@ int main()
                 if (i <= j)
                 {
 
-                    U[i][j] = (agr_tab[i][j] +( agr_tab_C[i][j] / GD.SimulationStepTime)) - sum;
+                    U[i][j] = (agr_tab[i][j] +( agr_tab_C[i][j] / dtime)) - sum;
                 }
                 else
                 {
-                    L[i][j] = (1. / U[j][j]) * ((agr_tab[i][j] +( agr_tab_C[i][j] / GD.SimulationStepTime)) - sum);
+                    L[i][j] = (1. / U[j][j]) * ((agr_tab[i][j] +( agr_tab_C[i][j] / dtime)) - sum);
                 }
             }
 
@@ -1013,21 +1025,12 @@ int main()
         }
 
 double temp;
-//for (int g = 0; g < grid1.Nn; g += 4)
-//{
-//    temp = tab_wynik[g + 3];
-//    tab_wynik[g + 3] = tab_wynik[g];
-//    tab_wynik[g] = temp;
-//    temp = tab_wynik[g + 2];
-//    tab_wynik[g + 2] = tab_wynik[g + 1];
-//    tab_wynik[g + 1] = temp;
-//
-//} 
+
 
         cout <<endl;
             for (int g = 0; g < grid1.Nn; g ++)
             {
-                agr_PC[g] = agr_P[g] + tab_wynik[g ] * agr_C[g] / (GD.SimulationStepTime);
+                agr_PC[g] = agr_P[g] + tab_wynik[g] * agr_C[g] / dtime;
                 cout << agr_PC[g] << "      ";
 
             }

@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Kopia_zapasowa.cpp" />
+    <ClCompile Include="kopia_zapasowa2-3punkty.cpp" />
     <ClCompile Include="Źródło.cpp" />
     <ClCompile Include="Źródło1.cpp" />
   </ItemGroup>

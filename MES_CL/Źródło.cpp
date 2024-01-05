@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 //#include <sstream>
-//#include <string>
 #include <iomanip>      
+#include <string>
 using namespace std;
 
 double ff2(double x, double y)
@@ -416,8 +416,8 @@ int main()
     }
  
    //liczba punktów calkowania
-   //int N = 4;
-   int N = 9;
+   int N = 4;
+   //int N = 9;
 
     GaussIntegration GausI(N);
 
@@ -499,6 +499,31 @@ int main()
         }
         agr_P[j] = 0;
         agr_C[j] = 0;
+    }
+
+    double*** tabN;
+    tabN = new double** [4];
+    for (int i = 0; i < 4; i++)
+    {
+        tabN[i] = new double* [sqrt(N)];
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < sqrt(N); j++)
+        {
+            tabN[i][j] = new double[4];
+        }
+    }
+    for (int j = 0; j < 4; j++)
+    {
+        for (int g = 0; g < sqrt(N); g++)
+        {
+            tabN[j][g][0] = N1(el.Surp[j][g][0], el.Surp[j][g][1]);
+            tabN[j][g][1] = N2(el.Surp[j][g][0], el.Surp[j][g][1]);
+            tabN[j][g][2] = N3(el.Surp[j][g][0], el.Surp[j][g][1]);
+            tabN[j][g][3] = N4(el.Surp[j][g][0], el.Surp[j][g][1]);
+        }
+        cout << endl;
     }
 
     //Pêtla elementów
@@ -607,19 +632,7 @@ int main()
             }
             cout << endl;
         }
-        double tabN[4][3][4];
-        
-                for (int j = 0; j < 4; j++)
-                {
-                    for (int g = 0; g < sqrt(N); g++)
-                    {
-                        tabN[j][g][0] = N1(el.Surp[j][g][0], el.Surp[j][g][1]);
-                        tabN[j][g][1] = N2(el.Surp[j][g][0], el.Surp[j][g][1]);
-                        tabN[j][g][2] = N3(el.Surp[j][g][0], el.Surp[j][g][1]);
-                        tabN[j][g][3] = N4(el.Surp[j][g][0], el.Surp[j][g][1]);
-                    }
-                    cout << endl;
-                }
+
                 for (int a = 0; a < 4; a++)
                 {
                     for (int j = 0; j < 4; j++)
@@ -772,7 +785,7 @@ int main()
                 {
                     for (int g = 0; g < 4; g++)
                     {
-                        grid1.Tele[i].C[j][g] += GD.Density * GD.SpecificHeat * (el.Tab_N[c][j] * el.Tab_N[c][g]) * detJ[c] * GausI.Tab_w[w1] * GausI.Tab_w[w2]; cout << detJ[c] << endl;
+                        grid1.Tele[i].C[j][g] += GD.Density * GD.SpecificHeat * (el.Tab_N[c][j] * el.Tab_N[c][g]) * detJ[c] * GausI.Tab_w[w1] * GausI.Tab_w[w2];// cout << detJ[c] << endl;
                     }
                 }
                 w1++;
@@ -869,9 +882,85 @@ int main()
     {
         cout << agr_PC[g] << "      ";
     }
-   
+
+    string filename = "PlikWP.vtk";
+    ofstream zapis(filename);
+    zapis << "# vtk DataFile Version 2.0" << endl;
+    zapis << "Unstructured Grid Example" << endl;
+    zapis << "ASCII" << endl;
+    zapis << "DATASET UNSTRUCTURED_GRID" << endl;
+    zapis << "" << endl;
+    zapis << "POINTS " + to_string(grid1.Nn) + " float" << endl;
+    for (int i = 0; i < grid1.Nn; i++)
+    {
+        zapis << grid1.Tnode[i].x << " " << grid1.Tnode[i].y << " " << 0 << endl;
+    }
+    zapis << endl;
+    int valmm = grid1.En * 5;
+    zapis << "CELLS " + to_string(grid1.En) + " " + to_string(valmm) << endl;
+    for (int i = 0; i < grid1.En; i++)
+    {
+        zapis << "4";
+        for (int j = 0; j < 4; j++)
+        {
+            zapis << " ";
+            zapis << grid1.Tele[i].ID[j];
+        }
+        zapis << endl;
+    }
+    zapis << endl;
+    zapis << "CELL_TYPES 9" << endl;
+    for (int j = 0; j < grid1.En; j++)
+    {
+        zapis << 9 << endl;;
+    }
+    zapis << endl;
+    zapis << "POINT_DATA " + to_string(grid1.Nn) << endl;
+    zapis << "SCALARS Temp float 1" << endl;
+    zapis << "LOOKUP_TABLE default" << endl;
+    for (int j = 0; j < grid1.Nn; j++)
+    {
+        zapis << GD.InitialTemp << endl;
+    }
+    zapis.close();
     for (double p = GD.SimulationStepTime; p < GD.SimulationTime + 1; p += GD.SimulationStepTime)
     {
+        string filename = "PlikW"+ to_string(p)+".vtk";
+        ofstream zapis(filename);
+        zapis << "# vtk DataFile Version 2.0" << endl;
+        zapis << "Unstructured Grid Example" << endl;
+        zapis << "ASCII" << endl;
+        zapis << "DATASET UNSTRUCTURED_GRID" << endl;
+        zapis << "" << endl;
+        zapis << "POINTS "+to_string(grid1.Nn) + " float" << endl;
+        for (int i = 0; i < grid1.Nn; i++)
+        {
+            zapis << grid1.Tnode[i].x << " " << grid1.Tnode[i].y << " " << 0 << endl;
+        }
+        zapis << endl;
+        int valmm = grid1.En * 5;
+        zapis << "CELLS "+to_string(grid1.En)+" "+to_string(valmm) << endl;
+        for (int i = 0; i < grid1.En; i++)
+        {
+            zapis << "4";
+            for (int j = 0; j < 4; j++)
+            {
+                zapis << " ";
+                zapis <<grid1.Tele[i].ID[j];
+            }
+            zapis << endl;
+        }
+        zapis << endl;
+        zapis << "CELL_TYPES 9" << endl;
+        for (int j = 0; j < grid1.En; j++)
+        {
+            zapis << 9 << endl;;
+        }
+        zapis << endl;
+        zapis << "POINT_DATA " + to_string(grid1.Nn) << endl;
+        zapis << "SCALARS Temp float 1" << endl;
+        zapis << "LOOKUP_TABLE default" << endl;
+
         for (int i = 0; i < grid1.Nn; i++)
         {
             for (int j = 0; j < grid1.Nn; j++)
@@ -939,6 +1028,7 @@ int main()
         for (int i = 0; i < grid1.Nn; i++)
         {
             cout << tab_wynik[i] << "  ";
+            zapis << tab_wynik[i] << endl;
             if (i % 4 == 3)
             {
             cout << endl;
@@ -948,10 +1038,11 @@ int main()
         int zmien = 3;
             for (int g = 0; g < grid1.Nn; g ++)
             {
-                agr_PC[g] = agr_P[g] + tab_wynik[g ] * agr_C[g] / GD.SimulationStepTime;
+                agr_PC[g] = agr_P[g] + tab_wynik[g] * agr_C[g] / GD.SimulationStepTime;
                 cout << agr_PC[g] << "      ";
             }
             cout << endl;
+            zapis.close();
     }
 
     return 0;
